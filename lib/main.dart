@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const BudgetApp());
@@ -96,14 +97,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: const Text('Add Category!'),
               ),
             ]),
-            ...ListTile.divideTiles(
-              context: context,
-              tiles: _categories.map((c) {
-                // todo next time: return a Widget function with capability
-                // to add items and planned amount
-                return ListTile(title: Text(c));
-              }),
-            ).toList(),
+            ..._categories.map((c) {
+              return BudgetItem(category: c);
+            })
           ],
         ),
       ),
@@ -113,5 +109,89 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return _budgetIsCreated ? _buildBudgetScreen() : _buildEmtpyScreen();
+  }
+}
+
+class BudgetItem extends StatefulWidget {
+  const BudgetItem({Key? key, required this.category}) : super(key: key);
+
+  final String category;
+
+  @override
+  State<BudgetItem> createState() => _BudgetItemState();
+}
+
+class _BudgetItemState extends State<BudgetItem> {
+  final List<String> _budgetItems = [];
+  final List<double> _plannedAmounts = [];
+  final _itemTitleController = TextEditingController();
+  final _itemAmountController = TextEditingController();
+
+  void _addBudgetItem(String budgetItem) {
+    _itemTitleController.clear();
+    _itemAmountController.clear();
+    setState(() {
+      _budgetItems.insert(0, budgetItem);
+      // todo next time: need to figure out types here
+      _plannedAmounts.insert(0, _itemAmountController.text as double);
+    });
+  }
+
+  // todo next time: display items after they've been entered
+  Widget _buildBudgetItemInput() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        children: [
+          Flexible(
+            child: TextField(
+              controller: _itemTitleController,
+              onSubmitted: _addBudgetItem,
+              decoration: const InputDecoration.collapsed(
+                  hintText: 'Add item to budget'),
+            ),
+          ),
+          Flexible(
+            child: TextField(
+              controller: _itemAmountController,
+              onSubmitted: _addBudgetItem,
+              decoration: const InputDecoration.collapsed(hintText: '0.00'),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              keyboardType: TextInputType.number,
+            ),
+          ),
+          IconTheme(
+            data: IconThemeData(color: Theme.of(context).colorScheme.secondary),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: TextButton(
+                  child: const Text("Add to Budget"),
+                  onPressed: () => _addBudgetItem(_itemTitleController.text)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.black),
+            bottom: BorderSide(color: Colors.black),
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(
+              widget.category,
+              textAlign: TextAlign.start,
+              style: const TextStyle(fontSize: 22),
+            ),
+            _buildBudgetItemInput()
+          ],
+        ));
   }
 }
